@@ -1,0 +1,140 @@
+DELETE FROM pp;
+DELETE FROM efeito_obj;
+DELETE FROM objecto_movel;
+DELETE FROM cinematica_hist;
+DELETE FROM cinematica;
+
+DELETE FROM efeito_obj;
+DELETE FROM objecto_movel;
+
+-- tipo_terreno
+-- terreno
+-- spatial_ref_sys
+-- rio
+-- gps_ponto
+-- pp;
+-- efeito_obj;
+-- objecto_movel;
+-- cinematica_hist;
+-- cinematica;
+
+select * from tipo_terreno
+select * from terreno
+select * from spatial_ref_sys
+select * from rio
+select * from gps_ponto
+select * from pp
+select * from efeito_obj;
+select * from objecto_movel
+select * from cinematica_hist
+select * from cinematica
+
+-- 10
+-- TIPO_TERRENO
+INSERT INTO tipo_terreno( id_tipo_terreno )
+VALUES('Rio')
+;
+
+INSERT INTO tipo_terreno( id_tipo_terreno )
+VALUES('Floresta')
+;
+
+INSERT INTO tipo_terreno( id_tipo_terreno )
+VALUES('Deserto')
+;
+
+INSERT INTO tipo_terreno( id_tipo_terreno )
+VALUES('Tundra')
+;
+
+INSERT INTO tipo_terreno( id_tipo_terreno )
+VALUES('Lago')
+;
+
+-- RIO
+INSERT INTO rio( id_rio, id_tipo_terreno, nivel, g_rio )
+VALUES
+(1, 'Rio', 5, ST_GeomFromText('LINESTRING(50 200, 125 199, 163 169, 175 124, 208 112, 270 100)')),
+(2, 'Rio', 5, ST_GeomFromText('LINESTRING(60 50, 119 70, 125 100, 150 115, 176 94, 181 50, 170 26)'))
+;
+
+-- TERRENO
+INSERT INTO terreno( id_terreno, id_tipo_terreno, nivel, g_terreno )
+VALUES
+(1, 'Floresta', 0, ST_GeomFromText('POLYGON((25 180, 30 200, 50 215, 90 175, 82 145, 30 125, 25 180))')),
+(2, 'Deserto', 1, ST_GeomFromText('POLYGON((50 202, 75 215, 155 210, 178 176, 175 130, 110 135, 60 155, 50 202))')),
+(3, 'Tundra', 0, ST_GeomFromText('POLYGON((155 161, 225 178, 270 175, 271 125, 170 51, 150 75, 132 120, 155 161))')),
+(4, 'Floresta', 1, ST_GeomFromText('POLYGON((179 100, 219 120, 255 119, 285 108, 284 59, 259 25, 218 17, 178 49, 179 100))')),
+(5, 'Deserto', 0, ST_GeomFromText('POLYGON((41 50, 84 82, 160 88, 202 62, 203 29, 161 12, 53 25, 41 50))')),
+(6, 'Tundra', 2, ST_GeomFromText('POLYGON((50 75, 50 128, 70 163, 165 150, 170 101, 120 66, 50 75))')),
+(7, 'Lago', 3, ST_GeomFromText('POLYGON((68 113, 73 129, 87 134, 100 126, 113 115, 108 83, 80 89, 68 113))')),
+(8, 'Floresta', 4, ST_GeomFromText('POLYGON((79 108, 76 118, 87 124, 93 116, 90 105, 79 108))'))
+;
+
+-- ??????
+INSERT INTO terrenos_rios ( id_tipo_terreno, nivel, g_geo )
+SELECT t.id_tipo_terreno, t.nivel, t.g_terreno as g_geo
+FROM terreno t
+ORDER BY t.nivel
+;
+
+INSERT INTO terrenos_rios ( id_tipo_terreno, nivel, g_geo )
+SELECT r.id_tipo_terreno, r.nivel, ST_Buffer(r.g_rio, 5) as g_geo
+FROM rio r
+;
+
+
+
+
+
+INSERT INTO cinematica ( id, orientacao, velocidade, aceleracao, g_posicao )
+VALUES
+(1, 0, ((0, 0), 0), ((-0.1, 0.1), 0), ST_GeomFromText('POINT(170 30)')),
+(2, 0, ((0, 0), 0), ((-0.1, 0.1), 0), ST_GeomFromText('POINT(230 70)'))
+;
+
+
+INSERT INTO pp( id_perseguidor, id_alvo )
+VALUES( 1, 2 );
+
+
+
+INSERT INTO objecto_movel ( id, nome, id_cinematica, norma_vel_max, boost, g_geo )
+VALUES
+(1, 'Lebre', 1, 5, 1, ST_Scale(ST_GeomFromText('POLYGON((0 0, 0 1, 0 2, 1 2, 1 3, 2 3, 2 4, 3 4, 3 5, 4 5, 5 5, 6 5, 6 6, 7 6, 7 7, 8 7, 8 8, 9 8, 9 9, 10 9, 11 9, 11 8, 11 7, 10 7, 10 6, 9 6, 8 6, 8 5, 7 5, 7 4, 6 4, 6 3, 6 2, 6 1, 5 1, 5 0, 4 0, 3 0, 2 0, 1 0, 0 0))'), 0.5, 0.5)),
+(2, 'Tartaruga', 2, 5, 1, ST_Scale(ST_GeomFromText('POLYGON((1 0, 1 1, 1 2, 0 2, 0 3, 1 3, 1 4, 1 5, 2 5, 2 6, 3 6, 3 7, 4 7, 5 7, 5 6, 6 6, 6 5, 7 5, 7 6, 8 6, 9 6, 9 5, 10 5, 10 4, 10 3, 9 3, 9 2, 8 2, 7 2, 7 1, 7 0, 6 0, 5 0, 5 1, 4 1, 3 1, 3 0, 2 0, 1 0))'), 0.5, 0.5))
+;
+
+UPDATE objecto_movel
+SET g_geo = ST_Translate(o.g_geo, ST_X(c.g_posicao) - ST_X(ST_Centroid(o.g_geo)), ST_Y(c.g_posicao) - ST_Y(ST_Centroid(o.g_geo)))
+FROM objecto_movel o, cinematica c
+WHERE o.id = c.id AND objecto_movel.id = o.id
+;
+
+
+
+INSERT INTO efeito_obj ( id_objeto, id_tipo_terreno, efeito )
+VALUES
+(1, 'Rio',		0.1),
+(1, 'Floresta',	1),
+(1, 'Deserto',	0.8),
+(1, 'Tundra',	0.5),
+(1, 'Lago',		0.3),
+
+(2, 'Rio',		0.2),
+(2, 'Floresta',	0.8),
+(2, 'Deserto',	0.6),
+(2, 'Tundra',	1),
+(2, 'Lago',		0.4)
+;
+
+
+
+
+
+
+
+
+
+
+
